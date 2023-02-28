@@ -2,10 +2,18 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <omp.h>
 
-#define N 16
+#define N 1650
 #define t 0.00001f
 #define eps 0.00001f
+
+void print_vector_double(const double *vect, const int length) {
+    for (int i = 0; i < length; i++) {
+        printf("%lf ", vect[i]);
+    }
+    printf("\n");
+}
 
 void fill_vector(double *vector, const int length, const double fill_value) {
     for (size_t i = 0; i < length; i++) {
@@ -94,17 +102,24 @@ int main(int argc, char **argv) {
     int flag = 1;
 
     clock_t start = clock();
+   // double start_time = omp_get_wtime();
     while (flag) {
-        mult_matr_on_vect(A, N, N, x_prev, N, x_next);
-        diff_vector(x_next, N, b, N, x_next);
-        double tmp_norm = norm(x_next, N);
-        flag = check(tmp_norm, b_norm);
-        mult_vect_on_num(x_next, N, t, x_next);
-        diff_vector(x_prev, N, x_next, N, x_next);
-        make_copy(x_next, N, x_prev, N);
+#pragma omp parallel
+        {
+            mult_matr_on_vect(A, N, N, x_prev, N, x_next);
+            diff_vector(x_next, N, b, N, x_next);
+            double tmp_norm = norm(x_next, N);
+            flag = check(tmp_norm, b_norm);
+            mult_vect_on_num(x_next, N, t, x_next);
+            diff_vector(x_prev, N, x_next, N, x_next);
+            make_copy(x_next, N, x_prev, N);
+        }
     }
+  //  double end_time = omp_get_wtime();
     clock_t end = clock();
     printf("%f\n", x_prev[0]);
+   // print_vector_double(x_prev,N);
+   // printf("%f sec\n", (end_time - start_time));
     printf("%ld sec\n", (end - start) / CLOCKS_PER_SEC);
     return 0;
 }
