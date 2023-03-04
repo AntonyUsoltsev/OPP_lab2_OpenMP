@@ -38,6 +38,7 @@ void mult_matr_on_vect(const double *A, const int height, const int width, const
     if (width != vect_len) {
         return;
     }
+#pragma omp for
     for (int i = 0; i < height; i++) {
         double summ = 0;
         for (int j = 0; j < width; j++) {
@@ -51,12 +52,14 @@ void diff_vector(const double *vect_1, const int len_1, const double *vect_2, co
     if (len_1 != len_2) {
         return;
     }
+#pragma omp for
     for (int i = 0; i < len_1; i++) {
         res[i] = vect_1[i] - vect_2[i];
     }
 }
 
 void mult_vect_on_num(const double *vect, const int vect_len, const double number, double *res) {
+#pragma omp for
     for (int i = 0; i < vect_len; i++) {
         res[i] = vect[i] * number;
     }
@@ -66,6 +69,7 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
     if (len_1 != len_2) {
         return;
     }
+#pragma omp for
     for (int i = 0; i < len_1; i++) {
         vect_2[i] = vect_1[i];
     }
@@ -73,12 +77,21 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
 
 double norm(const double *vect, const int vect_len) {
     double summ = 0;
+    // omp_lock_t lock;
+    // omp_init_lock(&lock);
+//#pragma omp shared(summ)
+#pragma omp parallel for reduction(+:summ)
     for (int i = 0; i < vect_len; i++) {
-        summ += vect[i] * vect[i];
+//#pragma omp atomic
+        //  omp_set_lock(&lock);
+
+            summ += vect[i] * vect[i];
+
+        // omp_unset_lock(&lock);
     }
+    // omp_destroy_lock(&lock);
     //summ = sqrt(summ);
     return summ;
-
 }
 
 int check(double vect_norm, double b_norm) {
@@ -101,28 +114,37 @@ int main(int argc, char **argv) {
     double *x_next = calloc(N, sizeof(double));
     int flag = 1;
 
-    clock_t start = clock();
-   // double start_time = omp_get_wtime();
+    //clock_t start = clock();
+    double start_time = omp_get_wtime();
+    double tmp_norm ;
 #pragma omp parallel
-{
-    while (flag) {
+    {
+            while (flag) {
+#pragma omp barrier
+                mult_matr_on_vect(A, N, N, x_prev, N, x_next);
+                diff_vector(x_next, N, b, N, x_next);
+                tmp_norm = norm(x_next, N);
 
-
-            mult_matr_on_vect(A, N, N, x_prev, N, x_next);
-            diff_vector(x_next, N, b, N, x_next);
-            double tmp_norm = norm(x_next, N);
-            flag = check(tmp_norm, b_norm);
-            mult_vect_on_num(x_next, N, t, x_next);
-            diff_vector(x_prev, N, x_next, N, x_next);
-            make_copy(x_next, N, x_prev, N);
+#pragma omp barrier
+#pragma omp master
+                {
+                   //printf("%f\n", tmp_norm);
+                    flag = check(tmp_norm, b_norm);
+                }
+                mult_vect_on_num(x_next, N, t, x_next);
+                diff_vector(x_prev, N, x_next, N, x_next);
+                make_copy(x_next, N, x_prev, N);
+#pragma omp barrier
+            }
 
     }
-}
-  //  double end_time = omp_get_wtime();
-    clock_t end = clock();
+
+    double end_time = omp_get_wtime();
+    // clock_t end = clock();
     printf("%f\n", x_prev[0]);
-   // print_vector_double(x_prev,N);
-   // printf("%f sec\n", (end_time - start_time));
-    printf("%ld sec\n", (end - start) / CLOCKS_PER_SEC);
+    printf("%f\n", tmp_norm);
+    // print_vector_double(x_prev,N);
+    printf("%f sec\n", (end_time - start_time));
+    //printf("%ld sec\n", (end - start) / CLOCKS_PER_SEC);
     return 0;
 }

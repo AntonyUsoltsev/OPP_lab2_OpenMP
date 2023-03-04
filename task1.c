@@ -124,6 +124,7 @@ int main(int argc, char **argv) {
         make_copy(x_next, N, x_prev, N);
     }
 
+
     double end_time = omp_get_wtime();
     printf("%f\n", x_prev[0]);
     //print_vector_double(x_prev,N);
