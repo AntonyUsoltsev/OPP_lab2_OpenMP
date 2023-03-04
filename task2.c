@@ -103,9 +103,11 @@ int main(int argc, char **argv) {
 
     clock_t start = clock();
    // double start_time = omp_get_wtime();
-    while (flag) {
 #pragma omp parallel
-        {
+{
+    while (flag) {
+
+
             mult_matr_on_vect(A, N, N, x_prev, N, x_next);
             diff_vector(x_next, N, b, N, x_next);
             double tmp_norm = norm(x_next, N);
@@ -113,8 +115,9 @@ int main(int argc, char **argv) {
             mult_vect_on_num(x_next, N, t, x_next);
             diff_vector(x_prev, N, x_next, N, x_next);
             make_copy(x_next, N, x_prev, N);
-        }
+
     }
+}
   //  double end_time = omp_get_wtime();
     clock_t end = clock();
     printf("%f\n", x_prev[0]);

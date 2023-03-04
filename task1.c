@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <time.h>
 #include <omp.h>
 
 #define N 1650
@@ -16,26 +15,21 @@ void print_vector_double(const double *vect, const int length) {
 }
 
 void fill_vector(double *vector, const int length, const double fill_value) {
-#pragma omp parallel
-    {
-#pragma omp for
-        for (size_t i = 0; i < length; i++) {
-            vector[i] = fill_value;
-        }
+#pragma omp parallel for
+    for (size_t i = 0; i < length; i++) {
+        vector[i] = fill_value;
     }
+
 }
 
 void fill_matrix(double *A, const int height, const int width) {
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                if (i == j)
-                    A[i * width + j] = 2.0f;
-                else
-                    A[i * width + j] = 1.0f;
-            }
+#pragma omp parallel for
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (i == j)
+                A[i * width + j] = 2.0f;
+            else
+                A[i * width + j] = 1.0f;
         }
     }
 }
@@ -46,66 +40,56 @@ void mult_matr_on_vect(const double *A, const int height, const int width, const
     if (width != vect_len) {
         return;
     }
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < height; i++) {
-            double summ = 0;
-            for (int j = 0; j < width; j++) {
-                summ += A[i * width + j] * vect[j];
-            }
-            res[i] = summ;
+#pragma omp parallel for
+    for (int i = 0; i < height; i++) {
+        double summ = 0;
+        for (int j = 0; j < width; j++) {
+            summ += A[i * width + j] * vect[j];
         }
+        res[i] = summ;
     }
+
 }
 
 void diff_vector(const double *vect_1, const int len_1, const double *vect_2, const int len_2, double *res) {
     if (len_1 != len_2) {
         return;
     }
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < len_1; i++) {
-            res[i] = vect_1[i] - vect_2[i];
-        }
+#pragma omp parallel for
+    for (int i = 0; i < len_1; i++) {
+        res[i] = vect_1[i] - vect_2[i];
     }
+
 }
 
 void mult_vect_on_num(const double *vect, const int vect_len, const double number, double *res) {
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < vect_len; i++) {
-            res[i] = vect[i] * number;
-        }
+#pragma omp parallel for
+    for (int i = 0; i < vect_len; i++) {
+        res[i] = vect[i] * number;
     }
+
 }
 
 void make_copy(const double *vect_1, const int len_1, double *vect_2, const int len_2) {
     if (len_1 != len_2) {
         return;
     }
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < len_1; i++) {
-            vect_2[i] = vect_1[i];
-        }
+#pragma omp parallel for
+    for (int i = 0; i < len_1; i++) {
+        vect_2[i] = vect_1[i];
     }
+
 }
 
 double norm(const double *vect, const int vect_len) {
     double summ = 0;
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int i = 0; i < vect_len; i++) {
-            summ += vect[i] * vect[i];
-        }
+#pragma omp parallel for reduction(+:summ)
+    for (int i = 0; i < vect_len; i++) {
+        summ += vect[i] * vect[i];
     }
-    return summ;
 
+
+    return summ;
 }
 
 int check(double vect_norm, double b_norm) {
@@ -116,47 +100,6 @@ int check(double vect_norm, double b_norm) {
 }
 
 int main(int argc, char **argv) {
-
-//#pragma omp parallel
-//    { int i,n;
-//        i = omp_get_thread_num();
-//        n = omp_get_num_threads();
-//        printf("I’m thread %d of %d\n",i,n);
-//
-//#pragma omp for
-//        for (i=0;i<1000;i++)
-//            printf("%d ",i);
-//
-//    }
-
-
-
-//    int i;
-//#pragma omp parallel private(i)
-//    {
-//#pragma omp for
-//        for (i=0;i<1000;i++) printf("%d ",i);
-//#pragma omp single
-//        printf("I’m thread %d!\n",omp_get_thread_num());
-//#pragma omp for
-//        for (i=0;i<1000;i++) printf("%d ",i);
-//    }
-//
-
-//#pragma omp parallel sections private(i)
-//    {
-//#pragma omp section
-//        {
-//            printf("1st half\n");
-//            for (i = 0; i < 500; i++) printf("%d ", i);
-//        }
-//#pragma omp section
-//        {
-//            printf("2nd half\n");
-//            for (i = 501; i < 1000; i++) printf("%d ", i);
-//        }
-//    }
-
 
     double *A = calloc(N * N, sizeof(double));
     double *b = calloc(N, sizeof(double));
@@ -169,25 +112,22 @@ int main(int argc, char **argv) {
 
     double *x_next = calloc(N, sizeof(double));
     int flag = 1;
-    clock_t start = clock();
     double start_time = omp_get_wtime();
 
-        while (flag) {
-            mult_matr_on_vect(A, N, N, x_prev, N, x_next);
-            diff_vector(x_next, N, b, N, x_next);
-            double tmp_norm = norm(x_next, N);
-            flag = check(tmp_norm, b_norm);
-            mult_vect_on_num(x_next, N, t, x_next);
-            diff_vector(x_prev, N, x_next, N, x_next);
-            make_copy(x_next, N, x_prev, N);
-        }
+    while (flag) {
+        mult_matr_on_vect(A, N, N, x_prev, N, x_next);
+        diff_vector(x_next, N, b, N, x_next);
+        double tmp_norm = norm(x_next, N);
+        flag = check(tmp_norm, b_norm);
+        mult_vect_on_num(x_next, N, t, x_next);
+        diff_vector(x_prev, N, x_next, N, x_next);
+        make_copy(x_next, N, x_prev, N);
+    }
 
     double end_time = omp_get_wtime();
-    clock_t end = clock();
-   // printf("%f\n", x_prev[0]);
+    printf("%f\n", x_prev[0]);
     //print_vector_double(x_prev,N);
     printf("%f sec\n", (end_time - start_time));
-    printf("%ld sec\n", (end- start)/CLOCKS_PER_SEC);
 
     return 0;
 }
