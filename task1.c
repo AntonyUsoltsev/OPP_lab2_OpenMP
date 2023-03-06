@@ -3,19 +3,11 @@
 #include <memory.h>
 #include <omp.h>
 
-#define N 1650
+#define N 16500
 #define t 0.00001f
 #define eps 0.00001f
 
-void print_vector_double(const double *vect, const int length) {
-    for (int i = 0; i < length; i++) {
-        printf("%lf ", vect[i]);
-    }
-    printf("\n");
-}
-
 void fill_vector(double *vector, const int length, const double fill_value) {
-#pragma omp parallel for
     for (size_t i = 0; i < length; i++) {
         vector[i] = fill_value;
     }
@@ -23,7 +15,6 @@ void fill_vector(double *vector, const int length, const double fill_value) {
 }
 
 void fill_matrix(double *A, const int height, const int width) {
-#pragma omp parallel for
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if (i == j)
@@ -35,8 +26,7 @@ void fill_matrix(double *A, const int height, const int width) {
 }
 
 
-void mult_matr_on_vect(const double *A, const int height, const int width, const double *vect, const int vect_len,
-                       double *res) {
+void mult_matr_on_vect(const double *A, const int height, const int width, const double *vect, const int vect_len, double *res) {
     if (width != vect_len) {
         return;
     }
@@ -87,8 +77,6 @@ double norm(const double *vect, const int vect_len) {
     for (int i = 0; i < vect_len; i++) {
         summ += vect[i] * vect[i];
     }
-
-
     return summ;
 }
 
@@ -113,7 +101,6 @@ int main(int argc, char **argv) {
     double *x_next = calloc(N, sizeof(double));
     int flag = 1;
     double start_time = omp_get_wtime();
-
     while (flag) {
         mult_matr_on_vect(A, N, N, x_prev, N, x_next);
         diff_vector(x_next, N, b, N, x_next);
@@ -124,11 +111,10 @@ int main(int argc, char **argv) {
         make_copy(x_next, N, x_prev, N);
     }
 
-
     double end_time = omp_get_wtime();
-    printf("%f\n", x_prev[0]);
-    //print_vector_double(x_prev,N);
-    printf("%f sec\n", (end_time - start_time));
+    printf("Result vector element: %f\n", x_prev[0]);
+    printf("Last calculated (Ax-b) norm: %f\n", tmp_norm);
+    printf("Elapsed time: %f sec\n", (end_time - start_time));
 
     return 0;
 }

@@ -1,19 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <time.h>
 #include <omp.h>
 
 #define N 1650
 #define t 0.00001f
 #define eps 0.00001f
-
-void print_vector_double(const double *vect, const int length) {
-    for (int i = 0; i < length; i++) {
-        printf("%lf ", vect[i]);
-    }
-    printf("\n");
-}
 
 void fill_vector(double *vector, const int length, const double fill_value) {
     for (size_t i = 0; i < length; i++) {
@@ -75,23 +67,12 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
     }
 }
 
-double norm(const double *vect, const int vect_len) {
-    double summ = 0;
-    // omp_lock_t lock;
-    // omp_init_lock(&lock);
-//#pragma omp shared(summ)
-#pragma omp parallel for reduction(+:summ)
+double norm(const double *vect, const int vect_len,double *summ) {
+#pragma omp for reduction(+:summ[0])
     for (int i = 0; i < vect_len; i++) {
-//#pragma omp atomic
-        //  omp_set_lock(&lock);
-
-            summ += vect[i] * vect[i];
-
-        // omp_unset_lock(&lock);
+        summ[0] += vect[i] * vect[i];
     }
-    // omp_destroy_lock(&lock);
-    //summ = sqrt(summ);
-    return summ;
+    return summ[0];
 }
 
 int check(double vect_norm, double b_norm) {
@@ -106,45 +87,40 @@ int main(int argc, char **argv) {
     double *b = calloc(N, sizeof(double));
     fill_matrix(A, N, N);
     fill_vector(b, N, (double) (N + 1));
-
-    double b_norm = norm(b, N);
+    double summ = 0;
+    double b_norm = norm(b, N, &summ);
     double *x_prev = calloc(N, sizeof(double));
     fill_vector(x_prev, N, 0);
 
     double *x_next = calloc(N, sizeof(double));
     int flag = 1;
-
-    //clock_t start = clock();
+    summ = 0;
+    double tmp_norm;
     double start_time = omp_get_wtime();
-    double tmp_norm ;
 #pragma omp parallel
     {
-            while (flag) {
+        while (flag) {
 #pragma omp barrier
-                mult_matr_on_vect(A, N, N, x_prev, N, x_next);
-                diff_vector(x_next, N, b, N, x_next);
-                tmp_norm = norm(x_next, N);
+            mult_matr_on_vect(A, N, N, x_prev, N, x_next);
+            diff_vector(x_next, N, b, N, x_next);
+            tmp_norm = norm(x_next, N, &summ);
 
 #pragma omp barrier
 #pragma omp master
-                {
-                   //printf("%f\n", tmp_norm);
-                    flag = check(tmp_norm, b_norm);
-                }
-                mult_vect_on_num(x_next, N, t, x_next);
-                diff_vector(x_prev, N, x_next, N, x_next);
-                make_copy(x_next, N, x_prev, N);
-#pragma omp barrier
+            {
+                summ = 0;
+                flag = check(tmp_norm, b_norm);
             }
+            mult_vect_on_num(x_next, N, t, x_next);
+            diff_vector(x_prev, N, x_next, N, x_next);
+            make_copy(x_next, N, x_prev, N);
+#pragma omp barrier
+        }
 
     }
-
     double end_time = omp_get_wtime();
-    // clock_t end = clock();
-    printf("%f\n", x_prev[0]);
-    printf("%f\n", tmp_norm);
-    // print_vector_double(x_prev,N);
-    printf("%f sec\n", (end_time - start_time));
-    //printf("%ld sec\n", (end - start) / CLOCKS_PER_SEC);
+    printf("Result vector element: %f\n", x_prev[0]);
+    printf("Last calculated (Ax-b) norm: %f\n", tmp_norm);
+    printf("Elapsed time: %f sec\n", (end_time - start_time));
     return 0;
 }
