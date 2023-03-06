@@ -3,8 +3,8 @@ Parallelization of a program using OpenMp
 
 Compile command
 
-    gcc -fopenmp task1.c -o task1
-    gcc -fopenmp task2.c -o task2
+    gcc -fopenmp task1.c -o task1 -Wpedantic -Werror -Wall -O3 --std=c99
+    gcc -fopenmp task2.c -o task2 -Wpedantic -Werror -Wall -O3 --std=c99
 
 Run command:
     
