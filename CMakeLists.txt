@@ -4,4 +4,4 @@ project(lab2_OpenMP C)
 set(CMAKE_C_STANDARD 99)
 SET(CMAKE_C_FLAGS -fopenmp)
 
-add_executable(lab2_OpenMP  task1.c)
+add_executable(lab2_OpenMP  task1.c task2.c)

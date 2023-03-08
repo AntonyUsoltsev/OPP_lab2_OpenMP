@@ -3,11 +3,12 @@
 #include <memory.h>
 #include <omp.h>
 
-#define N 16500
+#define N 15000
 #define t 0.00001f
 #define eps 0.00001f
 
 void fill_vector(double *vector, const int length, const double fill_value) {
+#pragma omp parallel for
     for (size_t i = 0; i < length; i++) {
         vector[i] = fill_value;
     }
@@ -15,6 +16,7 @@ void fill_vector(double *vector, const int length, const double fill_value) {
 }
 
 void fill_matrix(double *A, const int height, const int width) {
+#pragma omp parallel for
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if (i == j)
@@ -91,20 +93,22 @@ int main(int argc, char **argv) {
 
     double *A = calloc(N * N, sizeof(double));
     double *b = calloc(N, sizeof(double));
-    fill_matrix(A, N, N);
-    fill_vector(b, N, (double) (N + 1));
-
-    double b_norm = norm(b, N);
     double *x_prev = calloc(N, sizeof(double));
-    fill_vector(x_prev, N, 0);
-
     double *x_next = calloc(N, sizeof(double));
     int flag = 1;
+    double tmp_norm = 0;
+
     double start_time = omp_get_wtime();
+
+    fill_matrix(A, N, N);
+    fill_vector(b, N, (double) (N + 1));
+    double b_norm = norm(b, N);
+    fill_vector(x_prev, N, 0);
+
     while (flag) {
         mult_matr_on_vect(A, N, N, x_prev, N, x_next);
         diff_vector(x_next, N, b, N, x_next);
-        double tmp_norm = norm(x_next, N);
+        tmp_norm = norm(x_next, N);
         flag = check(tmp_norm, b_norm);
         mult_vect_on_num(x_next, N, t, x_next);
         diff_vector(x_prev, N, x_next, N, x_next);
@@ -112,6 +116,7 @@ int main(int argc, char **argv) {
     }
 
     double end_time = omp_get_wtime();
+
     printf("Result vector element: %f\n", x_prev[0]);
     printf("Last calculated (Ax-b) norm: %f\n", tmp_norm);
     printf("Elapsed time: %f sec\n", (end_time - start_time));
