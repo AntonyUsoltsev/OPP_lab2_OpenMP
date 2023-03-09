@@ -7,6 +7,6 @@
 #PBS -e err.txt
 
 cd $PBS_O_WORKDIR
-echo "OMP_NUM_THREADS = $OMP_NUM_THREADS"
 echo
+echo "OMP_NUM_THREADS = $OMP_NUM_THREADS"
 ./task2

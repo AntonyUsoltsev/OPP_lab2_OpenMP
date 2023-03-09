@@ -70,7 +70,7 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
 }
 
 double norm(const double *vect, const int vect_len, double *summ) {
-//#pragma omp for reduction(+:summ[0])
+#pragma omp for
     for (int i = 0; i < vect_len; i++) {
 #pragma omp atomic update
         *summ += vect[i] * vect[i];
@@ -103,20 +103,17 @@ int main(int argc, char **argv) {
         double b_norm = norm(b, N, &summ);
 #pragma omp master
         {
-            //  printf("%f\n\n\n",b_norm);
             summ = 0;
         }
         fill_vector(x_prev, N, 0);
-
-        while (flag) {
 #pragma omp barrier
+        while (flag) {
             mult_matr_on_vect(A, N, N, x_prev, N, x_next);
             diff_vector(x_next, N, b, N, x_next);
             tmp_norm = norm(x_next, N, &summ);
 #pragma omp barrier
 #pragma omp master
             {
-                // printf("%f\n", tmp_norm);
                 summ = 0;
                 flag = check(tmp_norm, b_norm);
             }
@@ -125,7 +122,6 @@ int main(int argc, char **argv) {
             make_copy(x_next, N, x_prev, N);
 #pragma omp barrier
         }
-
     }
     double end_time = omp_get_wtime();
     printf("Result vector element: %f\n", x_prev[0]);
