@@ -14,6 +14,7 @@ void fill_vector(double *vector, const int length, const double fill_value) {
     }
 }
 
+//TODO: second for
 void fill_matrix(double *A, const int height, const int width) {
 #pragma omp parallel for
     for (int i = 0; i < height; i++) {
@@ -26,7 +27,7 @@ void fill_matrix(double *A, const int height, const int width) {
     }
 }
 
-
+//TODO: second for
 void mult_matr_on_vect(const double *A, const int height, const int width, const double *vect, const int vect_len,
                        double *res) {
     if (width != vect_len) {
