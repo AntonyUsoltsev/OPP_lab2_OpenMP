@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <omp.h>
 
+//#define N 25000
 #define N 1500
 #define t 0.00001f
 #define eps 0.00001f

@@ -3,12 +3,22 @@
 #include <memory.h>
 #include <omp.h>
 
-#define N 8000
+#define N 25000
+//#define N 8000
 #define t 0.00001f
 #define eps 0.00001f
 
 void fill_vector(double *vector, const int length, const double fill_value) {
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, length/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, length/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, length/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (size_t i = 0; i < length; i++) {
         vector[i] = fill_value;
     }
@@ -16,7 +26,16 @@ void fill_vector(double *vector, const int length, const double fill_value) {
 
 
 void fill_matrix(double *A, const int height, const int width) {
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if (i == j)
@@ -27,13 +46,21 @@ void fill_matrix(double *A, const int height, const int width) {
     }
 }
 
-//TODO: second for
 void mult_matr_on_vect(const double *A, const int height, const int width, const double *vect, const int vect_len,
                        double *res) {
     if (width != vect_len) {
         return;
     }
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, height/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (int i = 0; i < height; i++) {
         double summ = 0;
         for (int j = 0; j < width; j++) {
@@ -47,7 +74,16 @@ void diff_vector(const double *vect_1, const int len_1, const double *vect_2, co
     if (len_1 != len_2) {
         return;
     }
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (int i = 0; i < len_1; i++) {
         res[i] = vect_1[i] - vect_2[i];
     }
@@ -55,7 +91,16 @@ void diff_vector(const double *vect_1, const int len_1, const double *vect_2, co
 }
 
 void mult_vect_on_num(const double *vect, const int vect_len, const double number, double *res) {
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, vect_len/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, vect_len/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, vect_len/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (int i = 0; i < vect_len; i++) {
         res[i] = vect[i] * number;
     }
@@ -65,7 +110,16 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
     if (len_1 != len_2) {
         return;
     }
-#pragma omp parallel for schedule(static, 1000)
+#pragma omp parallel for schedule(guided, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(guided, 1000)
+//#pragma omp parallel for schedule(guided)
+//#pragma omp parallel for schedule(runtime)
+//#pragma omp parallel for schedule(auto)
+//#pragma omp parallel for schedule(dynamic, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(dynamic, 1000)
+//#pragma omp parallel for schedule(dynamic, 1)
+//#pragma omp parallel for schedule(static, len_1/omp_get_num_threads())
+//#pragma omp parallel for schedule(static, 1000)
     for (int i = 0; i < len_1; i++) {
         vect_2[i] = vect_1[i];
     }
@@ -73,7 +127,16 @@ void make_copy(const double *vect_1, const int len_1, double *vect_2, const int 
 
 double norm(const double *vect, const int vect_len) {
     double summ = 0;
-#pragma omp parallel for reduction(+:summ) schedule(static, 1000)
+#pragma omp parallel for reduction(+:summ) schedule(guided, vect_len/omp_get_num_threads())
+//#pragma omp parallel for reduction(+:summ) schedule(guided, 1000)
+//#pragma omp parallel for reduction(+:summ) schedule(guided)
+//#pragma omp parallel for reduction(+:summ) schedule(runtime)
+//#pragma omp parallel for reduction(+:summ) schedule(auto)
+//#pragma omp parallel for reduction(+:summ) schedule(dynamic, vect_len/omp_get_num_threads())
+//#pragma omp parallel for reduction(+:summ) schedule(dynamic, 1000)
+//#pragma omp parallel for reduction(+:summ) schedule(dynamic, 1)
+//#pragma omp parallel for reduction(+:summ) schedule(static, vect_len/omp_get_num_threads())
+//#pragma omp parallel for reduction(+:summ) schedule(static, 1000)
     for (int i = 0; i < vect_len; i++) {
         summ += vect[i] * vect[i];
     }
